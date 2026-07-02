@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Nakano Production Dashboard - June 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 p-4 md:p-8">
+    <div class="max-w-[1600px] mx-auto bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <!-- Header Section -->
+        <header class="flex flex-col md:flex-row items-center justify-between pb-6 mb-6 border-b border-slate-100">
+            <div class="flex items-center gap-6">
+                <img src="NAKANO LOGO.png" alt="Nakano Precision" class="h-16 w-auto">
+                <div>
+                    <h1 class="text-2xl font-black text-slate-900 uppercase">BÁO CÁO SẢN XUẤT TỔ PHAY - THÁNG 6/2026</h1>
+                    <p class="text-sm text-slate-500">Chu kỳ: 08/06/2026 - 30/06/2026 | Tỷ giá: 1 USD = 26.000 VND</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- KPI Cards -->
+        <div id="kpi-container" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8"></div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
+                <h3 class="font-bold text-slate-700 mb-4 uppercase text-xs">Hiệu suất Ca máy theo lô (%)</h3>
+                <canvas id="perfChart" height="200"></canvas>
+            </div>
+            <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
+                <h3 class="font-bold text-slate-700 mb-4 uppercase text-xs">Doanh thu thuần (VND) - Tháng hiện tại</h3>
+                <canvas id="revChart" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="overflow-x-auto bg-white rounded-xl border border-slate-100">
+            <table class="w-full text-[11px] border-collapse">
+                <thead class="bg-slate-100 text-slate-600 uppercase">
+                    <tr>
+                        <th class="p-3 border">No</th><th class="p-3 border">Mã hàng</th><th class="p-3 border">Tên bản vẽ</th>
+                        <th class="p-3 border">Khách</th><th class="p-3 border">Mã Code</th><th class="p-3 border">SL Lot</th>
+                        <th class="p-3 border">Hư GC</th><th class="p-3 border">Hư Phôi</th><th class="p-3 border">SL TP</th>
+                        <th class="p-3 border">Sửa</th><th class="p-3 border">DT Thuần (VND)</th><th class="p-3 border">Lỗi (%)</th>
+                        <th class="p-3 border">Hiệu suất</th><th class="p-3 border">Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody id="dataTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const RATE = 26000;
+        const data = [
+            {"no": 1, "ma_hang": "G103-1489", "ten_hang": "単体用ベース", "khach_hang": "A0001-01", "ma_code": "26-106223-1", "sl_lot": 1050, "hu_gc": 0, "hu_phoi": 0, "sl_tp": 1050, "sl_sua": 0, "dt_ban_usd": 4357.5, "dt_thuan_usd": 3748.5, "that_thoat_usd": 0, "ca_lot": 10.1, "ca_thuc": 10.1, "status": "Đã xuất"},
+            {"no": 2, "ma_hang": "G103-1489", "ten_hang": "単体用ベース", "khach_hang": "A0001-01", "ma_code": "26-106319-1", "sl_lot": 1020, "hu_gc": 13, "hu_phoi": 0, "sl_tp": 1007, "sl_sua": 0, "dt_ban_usd": 4179.0, "dt_thuan_usd": 3594.9, "that_thoat_usd": 161.9, "ca_lot": 10.7, "ca_thuc": 10.8, "status": "Đã xuất"},
+            {"no": 3, "ma_hang": "G103-1489", "ten_hang": "単体用ベース", "khach_hang": "A0001-01", "ma_code": "26-106339-1", "sl_lot": 1020, "hu_gc": 0, "hu_phoi": 0, "sl_tp": 312, "sl_sua": 0, "dt_ban_usd": 1294.8, "dt_thuan_usd": 1113.8, "that_thoat_usd": 0, "ca_lot": 8.1, "ca_thuc": 10.1, "status": "Đang gia công"},
+            {"no": 4, "ma_hang": "F4-123278", "ten_hang": "タンク", "khach_hang": "A0001-01", "ma_code": "26-106219-1", "sl_lot": 420, "hu_gc": 6, "hu_phoi": 0, "sl_tp": 414, "sl_sua": 0, "dt_ban_usd": 1912.6, "dt_thuan_usd": 1374.8, "that_thoat_usd": 83.2, "ca_lot": 9.1, "ca_thuc": 9.1, "status": "Đã xuất"},
+            {"no": 5, "ma_hang": "F3-486968", "ten_hang": "バルブベース", "khach_hang": "A0001-01", "ma_code": "26-106218-1", "sl_lot": 1100, "hu_gc": 2, "hu_phoi": 0, "sl_tp": 846, "sl_sua": 0, "dt_ban_usd": 4653.0, "dt_thuan_usd": 3477.6, "that_thoat_usd": 33.0, "ca_lot": 29.2, "ca_thuc": 34.9, "status": "Đang gia công"},
+            {"no": 6, "ma_hang": "F3-486968", "ten_hang": "バルブベース", "khach_hang": "A0001-01", "ma_code": "26-106234-1", "sl_lot": 1100, "hu_gc": 0, "hu_phoi": 0, "sl_tp": 0, "sl_sua": 0, "dt_ban_usd": 0, "dt_thuan_usd": 0, "that_thoat_usd": 0, "ca_lot": 5.4, "ca_thuc": 35.8, "status": "Đang gia công"},
+            {"no": 7, "ma_hang": "F3-420009", "ten_hang": "アダプター", "khach_hang": "A0001-01", "ma_code": "26-106338-2", "sl_lot": 525, "hu_gc": 0, "hu_phoi": 0, "sl_tp": 0, "sl_sua": 0, "dt_ban_usd": 0, "dt_thuan_usd": 0, "that_thoat_usd": 0, "ca_lot": 3.1, "ca_thuc": 12.3, "status": "Đang gia công"},
+            {"no": 8, "ma_hang": "F3-420009", "ten_hang": "アダプター", "khach_hang": "A0001-01", "ma_code": "26-106338-3", "sl_lot": 525, "hu_gc": 0, "hu_phoi": 0, "sl_tp": 0, "sl_sua": 0, "dt_ban_usd": 0, "dt_thuan_usd": 0, "that_thoat_usd": 0, "ca_lot": 0.0, "ca_thuc": 12.2, "status": "Đang gia công"}
+        ];
+
+        // Calculations
+        const exp = data.filter(d => d.status === "Đã xuất");
+        const wip = data.filter(d => d.status === "Đang gia công");
+        
+        const kpis = [
+            {t: "Doanh thu Bán", v: exp.reduce((s,d)=>s+d.dt_ban_usd*RATE, 0).toLocaleString('vi-VN') + " đ", m: "415.0M đ"},
+            {t: "Doanh thu Thuần", v: exp.reduce((s,d)=>s+d.dt_thuan_usd*RATE, 0).toLocaleString('vi-VN') + " đ", m: "335.0M đ"},
+            {t: "Thất thoát hư", v: data.reduce((s,d)=>s+d.that_thoat_usd*RATE, 0).toLocaleString('vi-VN') + " đ", m: "< 5.0M đ"},
+            {t: "Tỷ lệ lỗi (NG)", v: (data.reduce((s,d)=>s+d.hu_gc+d.hu_phoi, 0)/data.reduce((s,d)=>s+d.sl_lot, 0)*100).toFixed(2) + "%", m: "< 0.5%"},
+            {t: "Hiệu suất Ca máy", v: (exp.reduce((s,d)=>s+d.ca_lot, 0)/exp.reduce((s,d)=>s+d.ca_thuc, 0)*100).toFixed(1) + "%", m: "85%"},
+            {t: "WIP (Dở dang)", v: wip.length + " Lô", m: wip.reduce((s,d)=>s+d.ca_thuc, 0).toFixed(1) + " Ca"}
+        ];
+
+        document.getElementById('kpi-container').innerHTML = kpis.map(k => `
+            <div class="bg-slate-800 text-white p-4 rounded-xl shadow-lg text-center">
+                <p class="text-[9px] uppercase opacity-70 tracking-widest">${k.t}</p>
+                <p class="text-sm font-black my-1">${k.v}</p>
+                <p class="text-[8px] text-cyan-400 uppercase font-bold">Mục tiêu: ${k.m}</p>
+            </div>
+        `).join('');
+
+        // Table Render
+        const tbody = document.getElementById('dataTable');
+        data.forEach(d => {
+            let eff = (d.ca_lot / d.ca_thuc * 100);
+            tbody.innerHTML += `<tr class="border-b hover:bg-slate-50 transition ${d.status === 'Đã xuất' ? '' : 'bg-slate-50'}">
+                <td class="p-3 border">${d.no}</td><td class="p-3 border font-bold">${d.ma_hang}</td><td class="p-3 border">${d.ten_hang}</td>
+                <td class="p-3 border">${d.khach_hang}</td><td class="p-3 border">${d.ma_code}</td><td class="p-3 border">${d.sl_lot}</td>
+                <td class="p-3 border">${d.hu_gc}</td><td class="p-3 border">${d.hu_phoi}</td><td class="p-3 border">${d.sl_tp}</td>
+                <td class="p-3 border">${d.sl_sua}</td>
+                <td class="p-3 border font-semibold">${d.status === 'Đã xuất' ? (d.dt_thuan_usd * RATE).toLocaleString('vi-VN') + ' đ' : 'Chờ xuất'}</td>
+                <td class="p-3 border">${((d.hu_gc+d.hu_phoi)/d.sl_lot*100).toFixed(1)}%</td>
+                <td class="p-3 border ${eff < 80 ? 'text-red-600 font-bold' : ''}">${eff.toFixed(1)}%</td>
+                <td class="p-3 border font-bold">${d.status}</td>
+            </tr>`;
+        });
+
+        // Charts Init
+        const labels = data.map(d => [d.ma_hang, d.ma_code]);
+        new Chart(document.getElementById('perfChart'), {
+            type: 'bar',
+            data: { labels: labels, datasets: [{label: 'Hiệu suất (%)', data: data.map(d => (d.ca_lot/d.ca_thuc*100).toFixed(1)), backgroundColor: '#06b6d4'}] }
+        });
+        new Chart(document.getElementById('revChart'), {
+            type: 'line',
+            data: { labels: labels, datasets: [{label: 'Doanh thu (VND)', data: data.map(d => d.status === 'Đã xuất' ? d.dt_thuan_usd * RATE : 0), borderColor: '#ec4899', backgroundColor: 'rgba(236, 72, 153, 0.2)', tension: 0.4, fill: true}] }
+        });
+    </script>
+</body>
+</html>
